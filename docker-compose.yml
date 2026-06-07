@@ -1,0 +1,86 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: gitsense
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-gitsense}
+      POSTGRES_DB: gitsense
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gitsense"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  embedding-service:
+    build:
+      context: ./embedding-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-all-MiniLM-L6-v2}
+      MAX_BATCH_SIZE: "64"
+      PORT: "8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: "8080"
+      GIN_MODE: release
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: gitsense
+      DB_PASSWORD: ${DB_PASSWORD:-gitsense}
+      DB_NAME: gitsense
+      DB_SSLMODE: disable
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-local}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-all-MiniLM-L6-v2}
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-384}
+      EMBEDDING_SERVICE_HOST: embedding-service
+      EMBEDDING_SERVICE_PORT: "8001"
+      EMBEDDING_BATCH_SIZE: ${EMBEDDING_BATCH_SIZE:-10}
+      ENABLE_TREND_RANKING: ${ENABLE_TREND_RANKING:-true}
+      MIN_REPO_STARS: ${MIN_REPO_STARS:-100}
+      MIN_REPO_FORKS: ${MIN_REPO_FORKS:-10}
+      REPO_ACTIVE_YEARS: ${REPO_ACTIVE_YEARS:-2}
+      BOOTSTRAP_MAX_DEPTH: ${BOOTSTRAP_MAX_DEPTH:-2}
+      BOOTSTRAP_WORKERS: ${BOOTSTRAP_WORKERS:-3}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      embedding-service:
+        condition: service_healthy
+
+volumes:
+  pgdata:

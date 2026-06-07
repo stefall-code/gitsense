@@ -1,0 +1,71 @@
+# Environment files
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+backend/gitsense
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+
+# Temp files
+tmp/
+temp/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Data & Cache
+data/
+cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+postgres-data/
+redis-data/
+
+# Scripts (local audit/debug)
+scripts/
+
+# Go build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Trae IDE rules (local only)
+.trae/
+
+# Personal docs (not for public repo)
+release_v1.md
+resume_description.md
