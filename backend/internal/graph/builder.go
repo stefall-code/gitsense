@@ -98,7 +98,7 @@ func (w *BuilderWorker) BuildGraph(ctx context.Context, fullRebuild bool) (*Buil
 		query += ` AND updated_at >= $1`
 		args = append(args, since)
 	}
-	query += ` ORDER BY stars DESC LIMIT 10000`
+	query += ` ORDER BY stars DESC`
 
 	rows, err := pool.Query(ctx, query, args...)
 	if err != nil {

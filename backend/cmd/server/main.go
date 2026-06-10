@@ -11,8 +11,10 @@ import (
 	"time"
 
 	"github.com/gitsense/gitsense/backend/internal/audit"
+	"github.com/gitsense/gitsense/backend/internal/autoeco"
 	"github.com/gitsense/gitsense/backend/internal/bootstrap"
 	"github.com/gitsense/gitsense/backend/internal/config"
+	"github.com/gitsense/gitsense/backend/internal/discovery"
 	"github.com/gitsense/gitsense/backend/internal/embedding"
 	"github.com/gitsense/gitsense/backend/internal/github"
 	"github.com/gitsense/gitsense/backend/internal/graph"
@@ -138,10 +140,21 @@ func main() {
 	auditStore := audit.NewStore(store.Pool())
 	auditHandler := audit.NewHandler(auditStore)
 
+	// --- 初始化 Discovery 组件 ---
+	discoverySvc := discovery.NewService(store, graphStore, classifier, recommendationSvc, trendService)
+	discoveryHandler := handler.NewDiscoveryHandler(discoverySvc)
+
+	// --- 初始化 Auto Ecosystem 组件 (Phase 11, G68 Shadow Mode) ---
+	autoEcoBuilder := autoeco.NewBuilder(store.Pool(), classifier)
+	autoEcoHandler := handler.NewAutoEcosystemHandler(autoEcoBuilder)
+
+	// --- 初始化 Analytics 组件 ---
+	analyticsHandler := handler.NewAnalyticsHandler(store.Pool())
+
 	healthHandler.SetDBHealthy(store.Ping(ctx) == nil)
 
 	engine := gin.Default()
-	router.Setup(engine, searchHandler, repoHandler, recHandler, ecoHandler, healthHandler, adminHandler, searchSimilarHandler, graphHandler, trendHandler, bootstrapHandler, auditHandler, cfg.Server.AdminToken)
+	router.Setup(engine, searchHandler, repoHandler, recHandler, ecoHandler, healthHandler, adminHandler, searchSimilarHandler, graphHandler, trendHandler, bootstrapHandler, auditHandler, discoveryHandler, autoEcoHandler, analyticsHandler, cfg.Server.AdminToken)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Server.Port),

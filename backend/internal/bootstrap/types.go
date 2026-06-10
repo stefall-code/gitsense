@@ -98,16 +98,70 @@ type TopicQuery struct {
 func DefaultSeedConfig() SeedConfig {
 	return SeedConfig{
 		AwesomeRepos: []string{
+			// AI / ML / LLM
 			"sindresorhus/awesome-ai",
 			"vinta/awesome-python",
-			"avelino/awesome-go",
 			"josephmisiti/awesome-machine-learning",
-			"awesome-selfhosted/awesome-selfhosted",
-			"tiimgreen/github-awesome-devops",
-			"sbilly/awesome-security",
-			"rosarior/awesome-open-source",
 			"Hannibal046/Awesome-LLM",
 			"e2b-dev/awesome-ai-agents",
+			"kyrolabs/awesome-agents",
+			"deepseek-ai/awesome-deepseek",
+			"hijkzzz/Awesome-LLM-Strawberry",
+			"AGI-Edgerunners/LLM-Agents-Papers",
+			"kaushikb11/awesome-llm-apps",
+			// Go
+			"avelino/awesome-go",
+			// DevOps / Infra
+			"awesome-selfhosted/awesome-selfhosted",
+			"tiimgreen/github-awesome-devops",
+			"veggiemonk/awesome-docker",
+			"alexkorr/awesome-kubernetes",
+			"ramitsurana/awesome-kubernetes",
+			"jenkinsci/awesome-jenkins",
+			"cicdops/awesome-ciandcd",
+			// Security
+			"sbilly/awesome-security",
+			"paralax/awesome-cybersecurity",
+			"onlurking/awesome-infosec",
+			// Data / Visualization
+			"fabiorosado/awesome-data-science",
+			"josephmisiti/awesome-data-engineering",
+			"christophergandrud/awesome-R",
+			"toplap/awesome-livecoding",
+			// Frontend / Web
+			"dypsilon/frontend-dev-bookmarks",
+			"nicolesaidy/awesome-web-design",
+			"brillout/awesome-react-components",
+			"vuejs/awesome-vue",
+			"sindresorhus/awesome-nodejs",
+			// Mobile
+			"vsouza/awesome-ios",
+			"JStumpp/awesome-android",
+			"vuejs/awesome-flutter",
+			// Systems / Low-level
+			"aleksandar-todorovic/awesome-c",
+			"rust-unofficial/awesome-rust",
+			"jondot/awesome-devenv",
+			// Open Source
+			"rosarior/awesome-open-source",
+			// Database
+			"numetriclabz/awesome-db",
+			"dhamaniasad/awesome-postgres",
+			"erictleung/awesome-nosql",
+			// Blockchain / Web3
+			"0xpranay/awesome-web3",
+			// Gaming
+			"ellisonleao/magictools",
+			"leereilly/games",
+			// Education
+			"josephmcasey/awesome-education",
+			// Design
+			"brabadu/awesome-fonts",
+			// CLI / Terminal
+			"alebcay/awesome-elixir",
+			// Science
+			"nschloe/awesome-scientific-computing",
+			"rossant/awesome-math",
 		},
 		TopicQueries: []TopicQuery{
 			{Topic: "agent", MinStars: 100},
@@ -120,6 +174,27 @@ func DefaultSeedConfig() SeedConfig {
 			{Topic: "devops", MinStars: 100},
 			{Topic: "selfhosted", MinStars: 100},
 			{Topic: "machine-learning", MinStars: 100},
+			{Topic: "rust", MinStars: 100},
+			{Topic: "kubernetes", MinStars: 100},
+			{Topic: "docker", MinStars: 100},
+			{Topic: "database", MinStars: 100},
+			{Topic: "react", MinStars: 100},
+			{Topic: "vue", MinStars: 100},
+			{Topic: "flutter", MinStars: 100},
+			{Topic: "android", MinStars: 100},
+			{Topic: "ios", MinStars: 100},
+			{Topic: "web3", MinStars: 100},
+			{Topic: "game-engine", MinStars: 100},
+			{Topic: "cli", MinStars: 100},
+			{Topic: "visualization", MinStars: 100},
+			{Topic: "deep-learning", MinStars: 100},
+			{Topic: "nlp", MinStars: 100},
+			{Topic: "computer-vision", MinStars: 100},
+			{Topic: "mcp", MinStars: 50},
+			{Topic: "function-calling", MinStars: 50},
+			{Topic: "diffusion-model", MinStars: 50},
+			{Topic: "text-to-speech", MinStars: 100},
+			{Topic: "speech-recognition", MinStars: 100},
 		},
 	}
 }

@@ -144,6 +144,16 @@ func (s *Service) GetEcosystemTrend(ctx context.Context, ecosystem string, windo
 	return trend, nil
 }
 
+// GetTopicTrendScore 获取单个 topic 的趋势分数（便捷方法）
+func (s *Service) GetTopicTrendScore(ctx context.Context, topic string, window TimeWindow) float64 {
+	return s.provider.GetTopicTrendScore(ctx, topic, window)
+}
+
+// GetEcosystemTrendScore 获取单个 ecosystem 的趋势分数（便捷方法）
+func (s *Service) GetEcosystemTrendScore(ctx context.Context, ecosystem string, window TimeWindow) float64 {
+	return s.provider.GetEcosystemTrendScore(ctx, ecosystem, window)
+}
+
 // --- 辅助查询 ---
 
 // getTopTopics 获取出现频率最高的 topics

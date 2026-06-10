@@ -49,3 +49,84 @@ export interface TrendOverview {
   }>;
   window: string;
 }
+
+// --- Discovery Types ---
+
+export interface StackRepo {
+  full_name: string;
+  description: string;
+  stars: number;
+  language: string;
+  trend: string;
+}
+
+export interface Subcategory {
+  name: string;
+  repo_count: number;
+  top_repos: StackRepo[];
+  trending: StackRepo[];
+}
+
+export interface TechStackTree {
+  ecosystem: string;
+  categories: Subcategory[];
+}
+
+export interface EcosystemInfo {
+  name: string;
+  subcategory: string;
+  repo_count: number;
+  trend: string;
+}
+
+export interface RepoSummary {
+  full_name: string;
+  description: string;
+  stars: number;
+  language: string;
+  topics: string[];
+}
+
+export interface DiscoveryResponse {
+  repo: RepoSummary;
+  ecosystem: EcosystemInfo;
+  stack: TechStackTree;
+  recommendations: SimilarRepository[];
+}
+
+export interface EcosystemSummary {
+  name: string;
+  repo_count: number;
+  category_count: number;
+  trend: string;
+  trend_score: number;
+}
+
+export interface EcosystemsResponse {
+  ecosystems: EcosystemSummary[];
+}
+
+export interface EcosystemDetail {
+  name: string;
+  repo_count: number;
+  trend: string;
+  trend_score: number;
+  growth_rate: number;
+  categories: Subcategory[];
+  top_repos: StackRepo[];
+}
+
+export interface TrendingRepo {
+  full_name: string;
+  stars: number;
+  language: string;
+  trend: string;
+  trend_score: number;
+  subcategory: string;
+}
+
+export interface TrendingResponse {
+  ecosystem: string;
+  window: string;
+  trending: TrendingRepo[];
+}

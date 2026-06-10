@@ -21,6 +21,9 @@ func Setup(
 	trendHandler *handler.TrendHandler,
 	bootstrapHandler *handler.BootstrapHandler,
 	auditHandler *audit.Handler,
+	discoveryHandler *handler.DiscoveryHandler,
+	autoEcoHandler *handler.AutoEcosystemHandler,
+	analyticsHandler *handler.AnalyticsHandler,
 	adminToken string,
 ) {
 	api := engine.Group("/api/v1")
@@ -35,6 +38,12 @@ func Setup(
 			repos.GET("/:owner/:name/recommendations", recHandler.GetRecommendations)
 			repos.GET("/:owner/:name/ecosystem", ecoHandler.GetEcosystem)
 		}
+
+		// Discovery API
+		api.GET("/discovery/:owner/:repo", discoveryHandler.Discover)
+		api.GET("/ecosystems", discoveryHandler.ListEcosystems)
+		api.GET("/ecosystem/:name", discoveryHandler.GetEcosystem)
+		api.GET("/ecosystem/:name/trending", discoveryHandler.GetTrending)
 
 		// Graph API
 		graphGroup := api.Group("/graph")
@@ -52,6 +61,10 @@ func Setup(
 			trendGroup.GET("/ecosystems", trendHandler.GetEcosystemTrends)
 			trendGroup.GET("/overview", trendHandler.GetOverview)
 		}
+
+		// Analytics API
+		api.POST("/analytics/events", analyticsHandler.CollectEvents)
+		api.GET("/analytics/stats", analyticsHandler.GetStats)
 	}
 
 	// 管理接口 — 需要 ADMIN_TOKEN 鉴权
@@ -72,5 +85,10 @@ func Setup(
 		// Audit API
 		admin.GET("/audit/graph", auditHandler.GraphAudit)
 		admin.POST("/audit/ablation", auditHandler.RankingAblation)
+
+		// Auto Ecosystem API (G68 Shadow Mode — admin only)
+		admin.POST("/build-auto-ecosystems", autoEcoHandler.BuildAutoEcosystems)
+		admin.GET("/auto-ecosystems/report", autoEcoHandler.GetAutoEcosystemReport)
+		admin.GET("/auto-ecosystems/benchmark", autoEcoHandler.BenchmarkHubPenalty)
 	}
 }

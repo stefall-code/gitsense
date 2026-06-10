@@ -1,4 +1,4 @@
-import type { RecommendationResponse, TrendOverview } from "./types";
+import type { RecommendationResponse, TrendOverview, DiscoveryResponse, EcosystemsResponse, EcosystemDetail } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api/v1";
 
@@ -35,6 +35,44 @@ export async function getTrendOverview(
     throw new Error(`Trend request failed: ${res.status}`);
   }
 
+  return res.json();
+}
+
+export async function getDiscovery(
+  owner: string,
+  repo: string,
+  options?: { limit?: number }
+): Promise<DiscoveryResponse> {
+  const params = new URLSearchParams();
+  if (options?.limit) params.set("limit", String(options.limit));
+
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const res = await fetch(
+    `${API_BASE}/discovery/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}${qs}`
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Discovery request failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function getEcosystems(): Promise<EcosystemsResponse> {
+  const res = await fetch(`${API_BASE}/ecosystems`);
+  if (!res.ok) {
+    throw new Error(`Ecosystems request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function getEcosystem(name: string): Promise<EcosystemDetail> {
+  const res = await fetch(`${API_BASE}/ecosystem/${encodeURIComponent(name)}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Ecosystem request failed: ${res.status}`);
+  }
   return res.json();
 }
 

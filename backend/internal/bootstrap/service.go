@@ -141,7 +141,10 @@ func (s *Service) Resume(ctx context.Context) error {
 	if job == nil {
 		return nil
 	}
-	if job.Status != JobPaused && job.Status != JobFailed {
+	// 容器重启后 running 状态的 job 实际没有 worker 在跑，需要恢复
+	if job.Status == JobRunning {
+		log.Printf("[bootstrap] found job %d in running state without active worker, resuming", job.ID)
+	} else if job.Status != JobPaused && job.Status != JobFailed {
 		return nil
 	}
 

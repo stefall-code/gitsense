@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gitsense/gitsense/backend/internal/graph"
@@ -114,17 +116,19 @@ func (h *AdminHandler) BuildGraph(c *gin.Context) {
 		req = graph.BuildGraphRequest{FullRebuild: false}
 	}
 
-	ctx := c.Request.Context()
-	result, err := h.graphBuilder.BuildGraph(ctx, req.FullRebuild)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-			Error: model.ErrorDetail{
-				Code:    "BUILD_GRAPH_FAILED",
-				Message: err.Error(),
-			},
-		})
-		return
-	}
+	// Use background context so build continues even if HTTP connection drops
+	bgCtx := context.Background()
+	go func() {
+		result, err := h.graphBuilder.BuildGraph(bgCtx, req.FullRebuild)
+		if err != nil {
+			log.Printf("[admin] background build-graph error: %v", err)
+		} else {
+			log.Printf("[admin] background build-graph completed: %+v", result)
+		}
+	}()
 
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusAccepted, gin.H{
+		"message":      "Graph build started in background",
+		"full_rebuild": req.FullRebuild,
+	})
 }

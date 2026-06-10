@@ -1,8 +1,11 @@
 import type { SimilarRepository } from "../types";
+import { trackRecommendationClick } from "../analytics";
+import { useI18n } from "../i18n";
 
 interface RepoCardProps {
   item: SimilarRepository;
   rank: number;
+  fromRepo?: string;
 }
 
 function scoreColor(score: number): string {
@@ -12,22 +15,30 @@ function scoreColor(score: number): string {
   return "#6b7280";
 }
 
-export default function RepoCard({ item, rank }: RepoCardProps) {
+export default function RepoCard({ item, rank, fromRepo }: RepoCardProps) {
   const repo = item.repository;
+  const { tr } = useI18n();
+
+  const handleClick = () => {
+    trackRecommendationClick(repo.full_name, fromRepo || "", rank);
+  };
 
   return (
     <div
       style={{
         border: "1px solid #e5e7eb",
-        borderRadius: 8,
+        borderRadius: 10,
         padding: 16,
-        marginBottom: 12,
         background: "#fff",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+        transition: "box-shadow 0.2s, border-color 0.2s",
       }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)"; e.currentTarget.style.borderColor = "#c7d2fe"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor = "#e5e7eb"; }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
             <span
               style={{
                 background: "#f3f4f6",
@@ -44,7 +55,8 @@ export default function RepoCard({ item, rank }: RepoCardProps) {
               href={`https://github.com/${repo.full_name}`}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ fontSize: 16, fontWeight: 600, color: "#2563eb", textDecoration: "none" }}
+              onClick={handleClick}
+              style={{ fontSize: 16, fontWeight: 600, color: "#2563eb", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis" }}
             >
               {repo.full_name}
             </a>
@@ -67,12 +79,13 @@ export default function RepoCard({ item, rank }: RepoCardProps) {
           style={{
             background: scoreColor(item.score),
             color: "#fff",
-            borderRadius: 6,
+            borderRadius: 8,
             padding: "4px 10px",
             fontSize: 14,
             fontWeight: 700,
             whiteSpace: "nowrap",
             marginLeft: 12,
+            boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
           }}
         >
           {item.score.toFixed(2)}
@@ -85,7 +98,7 @@ export default function RepoCard({ item, rank }: RepoCardProps) {
           <ul style={{ margin: 0, paddingLeft: 16, color: "#6b7280", fontSize: 13 }}>
             {item.reasons.map((reason, i) => (
               <li key={i} style={{ marginBottom: 2 }}>
-                {reason}
+                {tr(reason)}
               </li>
             ))}
           </ul>
