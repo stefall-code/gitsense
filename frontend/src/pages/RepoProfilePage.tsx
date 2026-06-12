@@ -6,7 +6,7 @@ import RepoCard from "../components/RepoCard";
 import EcosystemHeader from "../components/EcosystemHeader";
 import TechStackTree from "../components/TechStackTree";
 import TrendPanel from "../components/TrendPanel";
-import { trackShare, trackRecommendationClick, trackEcosystemOpen } from "../analytics";
+import { trackShare } from "../analytics";
 import { useI18n } from "../i18n";
 
 export default function RepoProfilePage() {
@@ -187,7 +187,7 @@ export default function RepoProfilePage() {
           <p style={{ fontSize: 14, color: "#6b7280", margin: "4px 0 8px" }}>{data.repo.description}</p>
         )}
         <div style={{ display: "flex", gap: 12, fontSize: 13, color: "#6b7280", flexWrap: "wrap" }}>
-          {data?.repo.stars > 0 && <span>⭐ {data.repo.stars.toLocaleString()}</span>}
+          {(data?.repo?.stars ?? 0) > 0 && <span>⭐ {data!.repo.stars.toLocaleString()}</span>}
           {data?.repo.language && <span>🔤 {data.repo.language}</span>}
           {data?.repo.topics && data.repo.topics.length > 0 && (
             <span>{data.repo.topics.slice(0, 5).map(t2 => (
@@ -218,7 +218,7 @@ export default function RepoProfilePage() {
 
       {/* Recommendations */}
       <div style={{ marginBottom: 16, color: "#6b7280", fontSize: 14 }}>
-        {t("repo.similar.prefix", "")}Found <strong>{data?.recommendations.length || 0}</strong> {t("repo.similar")}
+        {t("repo.similar.prefix")}Found <strong>{data?.recommendations.length || 0}</strong> {t("repo.similar")}
       </div>
 
       {data && data.recommendations.length === 0 && (
