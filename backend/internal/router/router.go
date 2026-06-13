@@ -24,6 +24,7 @@ func Setup(
 	discoveryHandler *handler.DiscoveryHandler,
 	autoEcoHandler *handler.AutoEcosystemHandler,
 	analyticsHandler *handler.AnalyticsHandler,
+	cacheStatsHandler *handler.CacheStatsHandler,
 	adminToken string,
 ) {
 	api := engine.Group("/api/v1")
@@ -90,5 +91,8 @@ func Setup(
 		admin.POST("/build-auto-ecosystems", autoEcoHandler.BuildAutoEcosystems)
 		admin.GET("/auto-ecosystems/report", autoEcoHandler.GetAutoEcosystemReport)
 		admin.GET("/auto-ecosystems/benchmark", autoEcoHandler.BenchmarkHubPenalty)
+
+		// Cache Stats API
+		admin.GET("/cache/stats", cacheStatsHandler.GetStats)
 	}
 }

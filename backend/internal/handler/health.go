@@ -4,27 +4,23 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gitsense/gitsense/backend/internal/cache"
 )
 
 // HealthHandler 处理健康检查
 type HealthHandler struct {
-	dbHealthy    bool
-	redisHealthy bool
+	cacheClient *cache.Client
+	dbHealthy   bool
 }
 
 // NewHealthHandler 创建新的 HealthHandler
-func NewHealthHandler() *HealthHandler {
-	return &HealthHandler{}
+func NewHealthHandler(cacheClient *cache.Client) *HealthHandler {
+	return &HealthHandler{cacheClient: cacheClient}
 }
 
 // SetDBHealthy 设置数据库健康状态
 func (h *HealthHandler) SetDBHealthy(healthy bool) {
 	h.dbHealthy = healthy
-}
-
-// SetRedisHealthy 设置 Redis 健康状态
-func (h *HealthHandler) SetRedisHealthy(healthy bool) {
-	h.redisHealthy = healthy
 }
 
 // Health 处理 GET /api/v1/health
@@ -34,13 +30,15 @@ func (h *HealthHandler) Health(c *gin.Context) {
 		dbStatus = "disconnected"
 	}
 
-	redisStatus := "connected"
-	if !h.redisHealthy {
-		redisStatus = "disconnected"
+	redisStatus := "disconnected"
+	if h.cacheClient != nil && h.cacheClient.IsAvailable() {
+		redisStatus = "connected"
 	}
 
 	status := "ok"
 	if !h.dbHealthy {
+		status = "degraded"
+	} else if redisStatus == "disconnected" {
 		status = "degraded"
 	}
 

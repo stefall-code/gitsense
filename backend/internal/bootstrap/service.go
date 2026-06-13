@@ -10,8 +10,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gitsense/gitsense/backend/internal/cache"
 	"github.com/gitsense/gitsense/backend/internal/github"
 	"github.com/gitsense/gitsense/backend/internal/service"
+)
+
+// processResult 处理结果
+type processResult int
+
+const (
+	processSuccess     processResult = iota // 成功
+	processFailed                           // 失败
+	processRateLimited                      // 限流，已放回队列
 )
 
 // Service Bootstrap 服务
@@ -20,6 +30,7 @@ type Service struct {
 	client    *github.Client
 	collector *service.CollectorService
 	worker    *service.EmbeddingWorker
+	cache     *cache.Client
 
 	// 配置
 	config BootstrapConfig
@@ -59,6 +70,7 @@ func NewService(
 	client *github.Client,
 	collector *service.CollectorService,
 	worker *service.EmbeddingWorker,
+	cacheClient *cache.Client,
 	config BootstrapConfig,
 ) *Service {
 	return &Service{
@@ -66,6 +78,7 @@ func NewService(
 		client:    client,
 		collector: collector,
 		worker:    worker,
+		cache:     cacheClient,
 		config:    config,
 	}
 }
@@ -247,25 +260,33 @@ func (s *Service) workerLoop(ctx context.Context, workerID, jobID int) {
 		}
 
 		// 处理
-		success := s.processItem(ctx, item, jobID)
+		result := s.processItem(ctx, item, jobID)
 
 		// 更新状态
-		if success {
+		switch result {
+		case processSuccess:
 			s.store.MarkDone(ctx, item.ID)
-		} else {
+			s.store.IncrementJobCounts(ctx, jobID, true)
+			// 失效生态列表缓存，新 repo 可能改变生态数据
+			if s.cache != nil {
+				_ = s.cache.Del(ctx, cache.EcosystemsListKey())
+			}
+		case processRateLimited:
+			// 已 Requeue，不需要 MarkFailed
+		case processFailed:
 			s.store.MarkFailed(ctx, item.ID)
+			s.store.IncrementJobCounts(ctx, jobID, false)
 		}
-		s.store.IncrementJobCounts(ctx, jobID, success)
 		s.store.UpdateQueueSize(ctx, jobID)
 	}
 }
 
 // processItem 处理单个队列项
-func (s *Service) processItem(ctx context.Context, item *QueueItem, jobID int) bool {
+func (s *Service) processItem(ctx context.Context, item *QueueItem, jobID int) processResult {
 	parts := strings.Split(item.RepoFullName, "/")
 	if len(parts) != 2 {
 		log.Printf("[bootstrap] invalid repo name: %s", item.RepoFullName)
-		return false
+		return processFailed
 	}
 	owner, repo := parts[0], parts[1]
 
@@ -273,27 +294,35 @@ func (s *Service) processItem(ctx context.Context, item *QueueItem, jobID int) b
 	exists, _ := s.store.IsRepoExists(ctx, item.RepoFullName)
 	if exists {
 		log.Printf("[bootstrap] skip existing: %s", item.RepoFullName)
-		return true
+		return processSuccess
 	}
 
 	// 2. 获取 repo 信息
 	repoInfo, err := s.client.FetchRepository(ctx, owner, repo)
 	if err != nil {
+		// 如果是限流错误，等待后重试（不标记为 failed）
+		if _, ok := err.(*github.RateLimitError); ok {
+			log.Printf("[bootstrap] rate limited, waiting for reset: %s", item.RepoFullName)
+			s.client.WaitForRateLimitReset()
+			// 把 item 放回队列头部
+			s.store.Requeue(ctx, item.ID)
+			return processRateLimited
+		}
 		log.Printf("[bootstrap] fetch %s error: %v", item.RepoFullName, err)
-		return false
+		return processFailed
 	}
 
 	// 3. 质量过滤
 	if !s.passQualityFilter(repoInfo) {
 		log.Printf("[bootstrap] quality filter rejected: %s (stars=%d)", item.RepoFullName, repoInfo.Stars)
-		return false
+		return processFailed
 	}
 
 	// 4. 采集入库
 	_, err = s.collector.FetchAndStore(ctx, owner, repo)
 	if err != nil {
 		log.Printf("[bootstrap] collect %s error: %v", item.RepoFullName, err)
-		return false
+		return processFailed
 	}
 
 	// 5. 触发 embedding
@@ -307,7 +336,7 @@ func (s *Service) processItem(ctx context.Context, item *QueueItem, jobID int) b
 	}
 
 	log.Printf("[bootstrap] processed: %s (depth=%d, source=%s)", item.RepoFullName, item.Depth, item.SourceType)
-	return true
+	return processSuccess
 }
 
 // passQualityFilter 数据质量过滤

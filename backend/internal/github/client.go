@@ -252,7 +252,7 @@ func (c *Client) doRequestWithAccept(ctx context.Context, url, accept string) ([
 		if err := c.checkRateLimit(); err != nil {
 			if rle, ok := err.(*RateLimitError); ok {
 				log.Printf("[github] pre-request rate limit, waiting until %v", rle.ResetAt)
-				c.waitForRateLimitReset()
+				c.WaitForRateLimitReset()
 				// 不消耗重试次数，限流等待后继续
 				attempt--
 				continue
@@ -310,7 +310,7 @@ func (c *Client) doRequestWithAccept(ctx context.Context, url, accept string) ([
 			if c.coreLimitRemaining <= 0 {
 				lastErr = &RateLimitError{ResetAt: c.coreLimitReset}
 				if shouldRetry(attempt, c.maxRetries) {
-					c.waitForRateLimitReset()
+					c.WaitForRateLimitReset()
 					continue
 				}
 				break
@@ -323,7 +323,7 @@ func (c *Client) doRequestWithAccept(ctx context.Context, url, accept string) ([
 		case resp.StatusCode == http.StatusTooManyRequests:
 			lastErr = &RateLimitError{ResetAt: c.coreLimitReset}
 			if shouldRetry(attempt, c.maxRetries) {
-				c.waitForRateLimitReset()
+				c.WaitForRateLimitReset()
 				continue
 			}
 		default:
@@ -393,8 +393,8 @@ func (c *Client) checkSearchRateLimit() error {
 	return nil
 }
 
-// waitForRateLimitReset 等待 Core API 限流重置
-func (c *Client) waitForRateLimitReset() {
+// WaitForRateLimitReset 等待 Core API 限流重置（公开方法）
+func (c *Client) WaitForRateLimitReset() {
 	c.waitForReset(&c.coreLimitReset)
 }
 

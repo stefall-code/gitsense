@@ -8,12 +8,13 @@ import (
 	"math"
 	"time"
 
+	"github.com/gitsense/gitsense/backend/internal/cache"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // RedisClient 最小 Redis 客户端接口
 type RedisClient interface {
-	Get(ctx context.Context, key string) (string, error)
+	Get(ctx context.Context, key string) (string, cache.CacheStatus, error)
 	Set(ctx context.Context, key string, value string, ttl time.Duration) error
 }
 
@@ -37,7 +38,7 @@ func (p *CachedTrendProvider) GetTopicTrendScore(ctx context.Context, topic stri
 	key := fmt.Sprintf("trend:topic:%s:%s", window, topic)
 
 	if p.redis != nil {
-		val, err := p.redis.Get(ctx, key)
+		val, _, err := p.redis.Get(ctx, key)
 		if err == nil && val != "" {
 			var t TopicTrend
 			if err := json.Unmarshal([]byte(val), &t); err == nil {
@@ -62,7 +63,7 @@ func (p *CachedTrendProvider) GetEcosystemTrendScore(ctx context.Context, ecosys
 	key := fmt.Sprintf("trend:ecosystem:%s:%s", window, ecosystem)
 
 	if p.redis != nil {
-		val, err := p.redis.Get(ctx, key)
+		val, _, err := p.redis.Get(ctx, key)
 		if err == nil && val != "" {
 			var t EcosystemTrend
 			if err := json.Unmarshal([]byte(val), &t); err == nil {

@@ -37,7 +37,7 @@ temp/
 
 # Data & Cache
 data/
-cache/
+/cache/
 
 # OS files
 .DS_Store

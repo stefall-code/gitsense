@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/gitsense/gitsense/backend/internal/graph"
 	"github.com/gitsense/gitsense/backend/internal/model"
@@ -97,12 +98,12 @@ type TrendingRepo struct {
 
 // TrendingResponse 趋势项目响应
 type TrendingResponse struct {
-	Ecosystem string        `json:"ecosystem"`
-	Window    string        `json:"window"`
+	Ecosystem string         `json:"ecosystem"`
+	Window    string         `json:"window"`
 	Trending  []TrendingRepo `json:"trending"`
 }
 
-// Service 发现服务
+// Service 发现服务（纯业务逻辑，不涉及缓存）
 type Service struct {
 	repoStore  *repository.RepoStore
 	graphStore *graph.Store
@@ -144,7 +145,6 @@ func (s *Service) Discover(ctx context.Context, fullName string, limit int) (*Di
 	if ecoName == "" {
 		ecoName = s.classifier.ClassifyWithFallback(repo.Topics, repo.Description)
 	}
-	// Language-based fallback for repos with no matching topics
 	if ecoName == "Unknown Ecosystem" && repo.Language != "" {
 		ecoName = s.classifier.ClassifyByLanguage(repo.Language)
 	}
@@ -229,7 +229,6 @@ func (s *Service) GetEcosystem(ctx context.Context, name string) (*EcosystemDeta
 		stack = &TechStackTree{Ecosystem: name}
 	}
 
-	// Top repos (全生态)
 	topRepos := s.getTopReposInEcosystem(ctx, name, 10)
 
 	return &EcosystemDetail{
@@ -254,10 +253,9 @@ func (s *Service) GetTrending(ctx context.Context, name string, window string, l
 		return &TrendingResponse{Ecosystem: name, Window: window}, nil
 	}
 
-	// 查询每个 repo 的趋势
 	var trending []TrendingRepo
 	for _, repoName := range ecoRepos {
-		if len(trending) >= limit*3 { // over-fetch then sort
+		if len(trending) >= limit*3 {
 			break
 		}
 		repo, err := s.repoStore.GetByFullName(ctx, repoName)
@@ -265,7 +263,6 @@ func (s *Service) GetTrending(ctx context.Context, name string, window string, l
 			continue
 		}
 
-		// 用 repo 的 topics 计算趋势分数
 		var maxTopicScore float64
 		for _, t := range repo.Topics {
 			score := s.trendSvc.GetTopicTrendScore(ctx, t, trend.TimeWindow(window))
@@ -274,10 +271,9 @@ func (s *Service) GetTrending(ctx context.Context, name string, window string, l
 			}
 		}
 
-		// 归一化到 [0, 1]
 		normalizedScore := (maxTopicScore + 1) / 2
 		if normalizedScore < 0.6 {
-			continue // 只返回 rising
+			continue
 		}
 
 		subcat := s.classifier.ClassifySubcategory(repo.Topics, name)
@@ -291,7 +287,6 @@ func (s *Service) GetTrending(ctx context.Context, name string, window string, l
 		})
 	}
 
-	// 按 trend_score DESC 排序
 	sort.Slice(trending, func(i, j int) bool {
 		return trending[i].TrendScore > trending[j].TrendScore
 	})
@@ -316,7 +311,6 @@ func (s *Service) buildStack(ctx context.Context, ecosystem string) (*TechStackT
 
 	ecoRepos, _ := s.graphStore.GetEcosystemRepos(ctx, ecosystem, 500)
 
-	// 查询所有 repo 详情
 	var allRepos []model.Repository
 	for _, name := range ecoRepos {
 		repo, err := s.repoStore.GetByFullName(ctx, name)
@@ -326,10 +320,7 @@ func (s *Service) buildStack(ctx context.Context, ecosystem string) (*TechStackT
 		allRepos = append(allRepos, *repo)
 	}
 
-	// Fallback: 如果 ecosystem_map 覆盖不足，用 classifier 实时分类补充
-	// 只在 ecoRepos 数量较少时触发
 	if len(allRepos) < 50 {
-		// 从 DB 获取所有 repos 的 topics，用 classifier 分类
 		rows, err := s.repoStore.Pool().Query(ctx, `
 			SELECT full_name, description, language, stars, topics
 			FROM repositories
@@ -377,14 +368,12 @@ func (s *Service) buildStack(ctx context.Context, ecosystem string) (*TechStackT
 			}
 		}
 
-		// 按 stars DESC 排序
 		sort.Slice(matched, func(i, j int) bool {
 			return matched[i].Stars > matched[j].Stars
 		})
 
 		topRepos := toStackRepos(matched, 5, ctx, s, ecosystem)
 
-		// Trending: trend=rising 的项目
 		var risingRepos []model.Repository
 		for _, r := range matched {
 			ts := s.trendSvc.GetTopicTrendScore(ctx, firstTopic(r.Topics), trend.Window7d)
@@ -473,4 +462,13 @@ func firstTopic(topics []string) string {
 		return topics[0]
 	}
 	return ""
+}
+
+// ParseFullName 解析 owner/repo 为 (owner, repo)
+func ParseFullName(fullName string) (string, string) {
+	parts := strings.SplitN(fullName, "/", 2)
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return fullName, ""
 }

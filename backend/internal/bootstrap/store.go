@@ -120,16 +120,17 @@ func (s *Store) EnqueueBatch(ctx context.Context, jobID int, items []QueueItem) 
 // Dequeue 取出下一个待处理项
 func (s *Store) Dequeue(ctx context.Context, jobID int) (*QueueItem, error) {
 	// 原子操作：pending → processing
+	// 同时处理当前 job 和其他 job 的 pending 项（避免 job_id 不匹配导致卡住）
 	row := s.pool.QueryRow(ctx, `
 		UPDATE bootstrap_queue SET status = 'processing', updated_at = NOW()
 		WHERE id = (
 			SELECT id FROM bootstrap_queue
-			WHERE job_id = $1 AND status = 'pending'
+			WHERE status = 'pending'
 			ORDER BY id LIMIT 1
 			FOR UPDATE SKIP LOCKED
 		)
 		RETURNING id, job_id, repo_full_name, source_type, discovered_from, depth, status, retry_count, created_at, updated_at
-	`, jobID)
+	`)
 
 	var item QueueItem
 	err := row.Scan(
@@ -155,6 +156,15 @@ func (s *Store) MarkDone(ctx context.Context, itemID int) error {
 func (s *Store) MarkFailed(ctx context.Context, itemID int) error {
 	_, err := s.pool.Exec(ctx, `
 		UPDATE bootstrap_queue SET status = 'failed', retry_count = retry_count + 1, updated_at = NOW()
+		WHERE id = $1
+	`, itemID)
+	return err
+}
+
+// Requeue 将 item 放回 pending 状态（用于限流重试）
+func (s *Store) Requeue(ctx context.Context, itemID int) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE bootstrap_queue SET status = 'pending', updated_at = NOW()
 		WHERE id = $1
 	`, itemID)
 	return err
