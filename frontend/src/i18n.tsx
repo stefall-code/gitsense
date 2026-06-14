@@ -31,9 +31,10 @@ const translations: Record<Lang, Record<string, string>> = {
     "search.demo.go.desc": "Compare Go web frameworks: Gin, Echo, Fiber, Chi",
     "search.demo.data.title": "Python Data Science",
     "search.demo.data.desc": "Navigate the Python data science stack: NumPy, SciPy, Scikit-learn",
-    "search.stats.repos": "open-source repos",
-    "search.stats.ecosystems": "tech topics",
-    "search.stats.connections": "ecosystem connections",
+    "search.stats.repos": "Repositories",
+    "search.stats.topics": "Technology Topics",
+    "search.stats.ecosystems": "Curated Ecosystems",
+    "search.stats.connections": "Repository Connections",
 
     // Repo Profile
     "repo.loading": "Discovering ecosystem...",
@@ -108,8 +109,9 @@ const translations: Record<Lang, Record<string, string>> = {
     "search.demo.data.title": "Python 数据科学",
     "search.demo.data.desc": "导航 Python 数据科学栈：NumPy、SciPy、Scikit-learn",
     "search.stats.repos": "开源仓库",
-    "search.stats.ecosystems": "技术标签",
-    "search.stats.connections": "生态连接",
+    "search.stats.topics": "技术标签",
+    "search.stats.ecosystems": "精选生态",
+    "search.stats.connections": "仓库连接",
 
     // Repo Profile
     "repo.loading": "正在发现生态...",
