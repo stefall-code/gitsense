@@ -208,8 +208,8 @@ export default function SearchPage() {
           color: "#6b7280",
           flexWrap: "wrap",
         }}>
-          <span><strong style={{ color: "#111827" }}>33,000+</strong> {t("search.stats.repos")}</span>
-          <span><strong style={{ color: "#111827" }}>400+</strong> {t("search.stats.ecosystems")}</span>
+          <span><strong style={{ color: "#111827" }}>100,000+</strong> {t("search.stats.repos")}</span>
+          <span><strong style={{ color: "#111827" }}>28</strong> {t("search.stats.ecosystems")}</span>
           <span><strong style={{ color: "#111827" }}>165,000+</strong> {t("search.stats.connections")}</span>
         </div>
       </div>

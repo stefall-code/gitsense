@@ -104,6 +104,9 @@ func (s *Service) Start(ctx context.Context) error {
 		log.Printf("[bootstrap] seed phase 1 error: %v", err)
 	}
 
+	// Phase 2: Topic 搜索入队
+	go s.seedPhase2(ctx, job.ID)
+
 	// 启动 worker pool
 	bsCtx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
@@ -232,6 +235,50 @@ func (s *Service) seedPhase1(ctx context.Context, jobID int) error {
 	}
 	log.Printf("[bootstrap] seeded %d awesome repos", len(s.config.SeedConfig.AwesomeRepos))
 	return nil
+}
+
+// seedPhase2 第二层种子：通过 Topic Search API 搜索入队
+func (s *Service) seedPhase2(ctx context.Context, jobID int) {
+	inserted := 0
+	for _, tq := range s.config.SeedConfig.TopicQueries {
+		query := url.QueryEscape(fmt.Sprintf("topic:%s stars:>%d", tq.Topic, tq.MinStars))
+		results, err := s.client.SearchRepositories(ctx, query, 100)
+		if err != nil {
+			errStr := err.Error()
+			// Search API 限流时等待重试
+			if strings.Contains(errStr, "forbidden") || strings.Contains(errStr, "rate limit") || strings.Contains(errStr, "RateLimitError") {
+				// 获取等待时间，如果为 0 则默认等 60 秒
+				waitTime := s.client.GetSearchRateLimitWaitTime(ctx)
+				if waitTime == 0 {
+					waitTime = 60 * time.Second
+				}
+				if waitTime > 15*time.Minute {
+					waitTime = 15 * time.Minute
+				}
+				log.Printf("[bootstrap] seed topic:%s rate limited, waiting %v", tq.Topic, waitTime)
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(waitTime):
+					results, err = s.client.SearchRepositories(ctx, query, 100)
+					if err != nil {
+						log.Printf("[bootstrap] seed topic:%s retry still limited, skipping", tq.Topic)
+						continue
+					}
+				}
+			} else {
+				log.Printf("[bootstrap] seed topic:%s error: %v", tq.Topic, err)
+				continue
+			}
+		}
+		for _, r := range results {
+			if err := s.store.Enqueue(ctx, jobID, r.FullName, SourceTopic, "topic:"+tq.Topic, 1); err == nil {
+				inserted++
+			}
+		}
+		log.Printf("[bootstrap] seed topic:%s → %d results", tq.Topic, len(results))
+	}
+	log.Printf("[bootstrap] seeded %d repos from %d topic queries", inserted, len(s.config.SeedConfig.TopicQueries))
 }
 
 // workerLoop Worker 主循环

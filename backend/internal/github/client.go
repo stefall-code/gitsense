@@ -306,11 +306,20 @@ func (c *Client) doRequestWithAccept(ctx context.Context, url, accept string) ([
 		case resp.StatusCode == http.StatusNotFound:
 			return nil, &NotFoundError{URL: url}
 		case resp.StatusCode == http.StatusForbidden:
-			// 可能是限流
+			// 可能是限流（Core 或 Search API）
 			if c.coreLimitRemaining <= 0 {
 				lastErr = &RateLimitError{ResetAt: c.coreLimitReset}
 				if shouldRetry(attempt, c.maxRetries) {
 					c.WaitForRateLimitReset()
+					continue
+				}
+				break
+			}
+			// Search API 限流也返回 403
+			if c.searchLimitRemaining <= 0 && !c.searchLimitReset.IsZero() {
+				lastErr = &RateLimitError{ResetAt: c.searchLimitReset}
+				if shouldRetry(attempt, c.maxRetries) {
+					c.waitForSearchRateLimitReset()
 					continue
 				}
 				break
@@ -418,6 +427,18 @@ func (c *Client) waitForReset(resetAt *time.Time) {
 // GetRateLimitInfo 获取当前限流信息（供 status API 使用）
 func (c *Client) GetRateLimitInfo() (coreRemaining, searchRemaining int, coreReset, searchReset time.Time) {
 	return c.coreLimitRemaining, c.searchLimitRemaining, c.coreLimitReset, c.searchLimitReset
+}
+
+// GetSearchRateLimitWaitTime 返回 Search API 限流等待时间
+func (c *Client) GetSearchRateLimitWaitTime(ctx context.Context) time.Duration {
+	if c.searchLimitReset.IsZero() {
+		return 0
+	}
+	wait := time.Until(c.searchLimitReset)
+	if wait < 0 {
+		return 0
+	}
+	return wait
 }
 
 // backoff 指数退避
