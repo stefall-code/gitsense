@@ -1,13 +1,18 @@
 FROM golang:1.24-alpine AS builder
 
-WORKDIR /app
-COPY go.mod ./
-RUN go mod download
-COPY . .
-RUN go mod tidy && CGO_ENABLED=0 go build -o /gitsense ./cmd/server
+ENV GOPROXY=https://mirrors.tencent.com/go,direct
+ENV GOSUMDB=sum.golang.google.cn
 
-FROM golang:1.24-alpine
-RUN apk --no-cache add ca-certificates
-COPY --from=builder /gitsense /usr/local/bin/gitsense
-EXPOSE 8080
-CMD ["gitsense"]
+WORKDIR /app
+
+COPY go.mod ./
+COPY go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 go build -o /gitsense ./cmd/server
+
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /gitsense /gitsense
+ENTRYPOINT ["/gitsense"]
