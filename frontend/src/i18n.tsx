@@ -32,7 +32,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "search.demo.data.title": "Python Data Science",
     "search.demo.data.desc": "Navigate the Python data science stack: NumPy, SciPy, Scikit-learn",
     "search.stats.repos": "open-source repos",
-    "search.stats.ecosystems": "tech ecosystems",
+    "search.stats.ecosystems": "tech topics",
     "search.stats.connections": "ecosystem connections",
 
     // Repo Profile
@@ -108,7 +108,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "search.demo.data.title": "Python 数据科学",
     "search.demo.data.desc": "导航 Python 数据科学栈：NumPy、SciPy、Scikit-learn",
     "search.stats.repos": "开源仓库",
-    "search.stats.ecosystems": "技术生态",
+    "search.stats.ecosystems": "技术标签",
     "search.stats.connections": "生态连接",
 
     // Repo Profile

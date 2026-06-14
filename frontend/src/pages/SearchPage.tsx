@@ -209,7 +209,7 @@ export default function SearchPage() {
           flexWrap: "wrap",
         }}>
           <span><strong style={{ color: "#111827" }}>100,000+</strong> {t("search.stats.repos")}</span>
-          <span><strong style={{ color: "#111827" }}>28</strong> {t("search.stats.ecosystems")}</span>
+          <span><strong style={{ color: "#111827" }}>28,000+</strong> {t("search.stats.ecosystems")}</span>
           <span><strong style={{ color: "#111827" }}>165,000+</strong> {t("search.stats.connections")}</span>
         </div>
       </div>
