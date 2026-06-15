@@ -19,9 +19,9 @@ MODEL_NAME = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 MAX_BATCH_SIZE = int(os.getenv("MAX_BATCH_SIZE", "64"))
 MAX_TEXT_LENGTH = int(os.getenv("MAX_TEXT_LENGTH", "8192"))
 
-# Load model at startup (build-time download, runtime load)
+# Load model at startup (offline, from host volume cache)
 logger.info(f"Loading model: {MODEL_NAME}")
-model = SentenceTransformer(MODEL_NAME)
+model = SentenceTransformer(MODEL_NAME, local_files_only=True)
 DIMENSIONS = model.get_sentence_embedding_dimension()
 logger.info(f"Model loaded: {MODEL_NAME}, dimensions={DIMENSIONS}")
 
