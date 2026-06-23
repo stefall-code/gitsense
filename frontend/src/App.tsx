@@ -20,6 +20,22 @@ export default function App() {
             <Route path="/ecosystems" element={<EcosystemsListPage />} />
             <Route path="/ecosystem/:name" element={<EcosystemDetailPage />} />
           </Routes>
+          <footer style={{
+            padding: "16px 20px",
+            textAlign: "center",
+            fontSize: 12,
+            color: "#9ca3af",
+            background: "#f9fafb",
+          }}>
+            <a
+              href="https://beian.miit.gov.cn/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "#9ca3af", textDecoration: "none" }}
+            >
+              粤ICP备2026081993号
+            </a>
+          </footer>
         </div>
       </BrowserRouter>
     </I18nProvider>
