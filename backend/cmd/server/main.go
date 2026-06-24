@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gitsense/gitsense/backend/internal/audit"
 	"github.com/gitsense/gitsense/backend/internal/autoeco"
 	"github.com/gitsense/gitsense/backend/internal/bootstrap"
@@ -24,7 +25,6 @@ import (
 	"github.com/gitsense/gitsense/backend/internal/router"
 	"github.com/gitsense/gitsense/backend/internal/service"
 	"github.com/gitsense/gitsense/backend/internal/trend"
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -171,8 +171,22 @@ func main() {
 		WriteTimeout: 30 * time.Second,
 	}
 
-	log.Printf("GitSense server starting on port %s", cfg.Server.Port)
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("listen: %s\n", err)
+	go func() {
+		log.Printf("GitSense server starting on port %s", cfg.Server.Port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("shutting down server...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Fatal("server forced to shutdown:", err)
 	}
+	log.Println("server exited")
 }
