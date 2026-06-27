@@ -218,10 +218,10 @@ export default function RepoProfilePage() {
 
       {/* Recommendations */}
       <div style={{ marginBottom: 16, color: "#6b7280", fontSize: 14 }}>
-        {t("repo.similar.prefix")}Found <strong>{data?.recommendations.length || 0}</strong> {t("repo.similar")}
+        {t("repo.similar.prefix")}Found <strong>{data?.recommendations?.length ?? 0}</strong> {t("repo.similar")}
       </div>
 
-      {data && data.recommendations.length === 0 && (
+      {(data?.recommendations ?? []).length === 0 && (
         <div style={{ textAlign: "center", padding: 48, color: "#9ca3af", fontSize: 14 }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>🔎</div>
           <p>{t("repo.noSimilar")}</p>
@@ -230,13 +230,13 @@ export default function RepoProfilePage() {
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        {data?.recommendations.map((item, i) => (
+        {(data?.recommendations ?? []).map((item, i) => (
           <RepoCard key={item.repository.full_name} item={item} rank={i + 1} fromRepo={`${owner}/${repo}`} />
         ))}
       </div>
 
       {/* Tech Stack Tree */}
-      {data?.stack && data.stack.categories.length > 0 && (
+      {(data?.stack?.categories ?? []).length > 0 && (
         <div style={{ marginTop: 32 }}>
           <TechStackTree stack={data.stack} />
         </div>
