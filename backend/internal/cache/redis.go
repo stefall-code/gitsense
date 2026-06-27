@@ -189,6 +189,8 @@ func shortKey(key string) string {
 // --- 缓存 Key 常量 ---
 
 const (
+	// CacheVersion 缓存版本号，改 schema 时递增即可自动失效所有旧缓存
+	CacheVersion  = "v2"
 	KeyDiscovery  = "discovery"   // discovery:{owner}/{repo}
 	KeyEcosystems = "ecosystems"  // ecosystems:list
 	KeyEcosystem  = "ecosystem"   // ecosystem:{name}
@@ -197,22 +199,22 @@ const (
 
 // DiscoveryKey 生成 Discovery 缓存 Key
 func DiscoveryKey(owner, repo string) string {
-	return fmt.Sprintf("%s:%s/%s", KeyDiscovery, owner, repo)
+	return fmt.Sprintf("%s:%s:%s/%s", KeyDiscovery, CacheVersion, owner, repo)
 }
 
 // EcosystemKey 生成 Ecosystem 详情缓存 Key
 func EcosystemKey(name string) string {
-	return fmt.Sprintf("%s:%s", KeyEcosystem, name)
+	return fmt.Sprintf("%s:%s:%s", KeyEcosystem, CacheVersion, name)
 }
 
 // TrendingKey 生成 Trending 缓存 Key
 func TrendingKey(name string) string {
-	return fmt.Sprintf("%s:%s", KeyTrending, name)
+	return fmt.Sprintf("%s:%s:%s", KeyTrending, CacheVersion, name)
 }
 
 // EcosystemsListKey 生成 Ecosystem 列表缓存 Key
 func EcosystemsListKey() string {
-	return "ecosystems:list"
+	return fmt.Sprintf("%s:%s:list", KeyEcosystems, CacheVersion)
 }
 
 // --- TTL 常量 ---
