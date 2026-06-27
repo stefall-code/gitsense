@@ -170,7 +170,20 @@ func (s *Service) Discover(ctx context.Context, fullName string, limit int) (*Di
 		recs = []model.SimilarRepository{}
 	}
 
-	return &DiscoveryResponse{
+	// 确保 stack 中所有 slice 非 nil（防止 JSON null）
+	if stack.Categories == nil {
+		stack.Categories = []Subcategory{}
+	}
+	for i := range stack.Categories {
+		if stack.Categories[i].TopRepos == nil {
+			stack.Categories[i].TopRepos = []StackRepo{}
+		}
+		if stack.Categories[i].Trending == nil {
+			stack.Categories[i].Trending = []StackRepo{}
+		}
+	}
+
+	resp := &DiscoveryResponse{
 		Repo: RepoSummary{
 			FullName:    repo.FullName,
 			Description: repo.Description,
@@ -186,7 +199,17 @@ func (s *Service) Discover(ctx context.Context, fullName string, limit int) (*Di
 		},
 		Stack:           *stack,
 		Recommendations: recs,
-	}, nil
+	}
+
+	// 最终兜底：确保所有 slice 非 nil
+	if resp.Repo.Topics == nil {
+		resp.Repo.Topics = []string{}
+	}
+	if resp.Recommendations == nil {
+		resp.Recommendations = []model.SimilarRepository{}
+	}
+
+	return resp, nil
 }
 
 // ListEcosystems 列出所有生态
