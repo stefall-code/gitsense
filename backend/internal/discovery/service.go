@@ -77,13 +77,13 @@ type EcosystemsResponse struct {
 
 // EcosystemDetail 生态详情响应
 type EcosystemDetail struct {
-	Name        string        `json:"name"`
-	RepoCount   int           `json:"repo_count"`
-	Trend       string        `json:"trend"`
-	TrendScore  float64       `json:"trend_score"`
-	GrowthRate  float64       `json:"growth_rate"`
-	Categories  []Subcategory `json:"categories"`
-	TopRepos    []StackRepo   `json:"top_repos"`
+	Name       string        `json:"name"`
+	RepoCount  int           `json:"repo_count"`
+	Trend      string        `json:"trend"`
+	TrendScore float64       `json:"trend_score"`
+	GrowthRate float64       `json:"growth_rate"`
+	Categories []Subcategory `json:"categories"`
+	TopRepos   []StackRepo   `json:"top_repos"`
 }
 
 // TrendingRepo 趋势项目
@@ -250,10 +250,10 @@ func (s *Service) GetTrending(ctx context.Context, name string, window string, l
 
 	ecoRepos, _ := s.graphStore.GetEcosystemRepos(ctx, name, 500)
 	if len(ecoRepos) == 0 {
-		return &TrendingResponse{Ecosystem: name, Window: window}, nil
+		return &TrendingResponse{Ecosystem: name, Window: window, Trending: []TrendingRepo{}}, nil
 	}
 
-	var trending []TrendingRepo
+	trending := []TrendingRepo{}
 	for _, repoName := range ecoRepos {
 		if len(trending) >= limit*3 {
 			break
@@ -351,7 +351,7 @@ func (s *Service) buildStack(ctx context.Context, ecosystem string) (*TechStackT
 		}
 	}
 
-	var categories []Subcategory
+	categories := []Subcategory{}
 	for _, sub := range rule.Subcategories {
 		subTopicSet := make(map[string]bool, len(sub.Topics))
 		for _, t := range sub.Topics {
@@ -430,7 +430,7 @@ func toStackRepos(repos []model.Repository, limit int, ctx context.Context, s *S
 	if len(repos) > limit {
 		repos = repos[:limit]
 	}
-	var result []StackRepo
+	result := []StackRepo{}
 	for _, r := range repos {
 		ts := s.trendSvc.GetTopicTrendScore(ctx, firstTopic(r.Topics), trend.Window7d)
 		normalized := (ts + 1) / 2

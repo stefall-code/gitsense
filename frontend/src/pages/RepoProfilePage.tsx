@@ -64,7 +64,7 @@ export default function RepoProfilePage() {
     }
   };
 
-  const trendingRepos = data?.stack.categories.flatMap((c) => c.trending) || [];
+  const trendingRepos = (data?.stack?.categories ?? []).flatMap((c) => c.trending ?? []);
 
   if (loading) {
     return (

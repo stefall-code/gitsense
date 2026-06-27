@@ -89,15 +89,15 @@ export default function TechStackTree({ stack }: Props) {
 
             {isOpen && (
               <div>
-                {cat.top_repos.map((repo) => (
+                {(cat.top_repos ?? []).map((repo) => (
                   <RepoItem key={repo.full_name} repo={repo} />
                 ))}
-                {cat.trending.length > 0 && (
+                {(cat.trending ?? []).length > 0 && (
                   <div style={{ paddingLeft: 20, marginTop: 4 }}>
                     <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 600 }}>
                       🔥 Trending:
                     </span>{" "}
-                    {cat.trending.map((r) => r.full_name.split("/")[1]).join(", ")}
+                    {(cat.trending ?? []).map((r) => r.full_name.split("/")[1]).join(", ")}
                   </div>
                 )}
               </div>
