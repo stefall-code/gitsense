@@ -167,7 +167,7 @@ func (s *Service) Discover(ctx context.Context, fullName string, limit int) (*Di
 	// Step 6: 获取推荐
 	recs, err := s.recService.GetRecommendations(ctx, fullName, limit, false, "")
 	if err != nil {
-		recs = nil
+		recs = []model.SimilarRepository{}
 	}
 
 	return &DiscoveryResponse{
